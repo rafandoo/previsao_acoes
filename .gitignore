@@ -125,3 +125,4 @@ dmypy.json
 
 # temp folder
 temp/
+*.hdf5
