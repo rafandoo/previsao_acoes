@@ -125,4 +125,6 @@ dmypy.json
 
 # temp folder
 temp/
-*.hdf5
+
+# pycharm stuff
+.idea
