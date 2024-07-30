@@ -1,15 +1,14 @@
 from models.iModels import InterfaceModels
 import tensorflow as tf
 from tensorflow import keras
-from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout    
-from keras.callbacks import ModelCheckpoint
+from keras.layers import Dense, GRU, Dropout
 from data.utils import Utils
 from util.logger import LoggerFactory as lf
 
-class mCNN(InterfaceModels):
+class mGRU(InterfaceModels):
     
     def __init__(self, xTest, xNormTrain, xNormTest ,yNormTrain, yNormTest, inputs, output, batchSize = 64, epochs = 10) -> None:
-        self.cnn = keras.Sequential()
+        self.gru = keras.Sequential()
         self.__xTest = xTest
         self.__xNormTrain = xNormTrain
         self.__yNormTrain = yNormTrain
@@ -21,79 +20,59 @@ class mCNN(InterfaceModels):
         self.__epochs = epochs
         self.outTest = None
         self.outPreds = None
-        self.__checkpoint = self.checkpoint()
     
     def createModel(self):
-        lf().logInfo('Criando o modelo CNN...')
-        self.cnn.add(
-            Conv1D(
-                filters=32,
-                kernel_size=3,
-                activation='relu',
-                padding='same',
+        lf().logInfo('Criando o modelo GRU...')
+        self.gru.add(
+            GRU(
+                units=64,
+                return_sequences=True, 
                 input_shape=(self.__xNormTrain.shape[1], len(self.__inputs))
             )
         )
-        self.cnn.add(MaxPooling1D(pool_size=2))
-        
-        self.cnn.add(
-            Conv1D(
-                filters=64,
-                kernel_size=3,
-                activation='relu',
-                padding='same'
+        self.gru.add(Dropout(0.2))
+        self.gru.add(
+            GRU(
+                units=50,
+                return_sequences=True
             )
         )
-        self.cnn.add(MaxPooling1D(pool_size=2))
-        
-        self.cnn.add(Flatten())
-        
-        self.cnn.add(
-            Dense(
-                units=128,
-                activation='relu'
+        self.gru.add(Dropout(0.2))
+        self.gru.add(
+            GRU(
+                units=50
             )
         )
-        self.cnn.add(Dropout(0.5))
-        self.cnn.add(
+        self.gru.add(Dropout(0.2))
+        self.gru.add(
             Dense(
                 units=1
             )
         )
         
-        self.cnn.compile(optimizer='adam', loss='mean_squared_error')
-        lf().logInfo('Modelo CNN criado!')
+        self.gru.compile(optimizer='adam', loss='mean_squared_error')
+        lf().logInfo('Modelo GRU criado!')
         
     def sumary(self):
-        self.cnn.summary()
+        self.gru.summary()
         
-        
-
-    def checkpoint(self):
-        return ModelCheckpoint(
-            filepath='weights_best.hdf5', 
-            verbose=2, 
-            save_best_only=True
-        )
-
     def fit(self):
-        lf().logInfo('Treinando o modelo CNN...')
-        self.cnn.fit(
+        lf().logInfo('Treinando o modelo GRU...')
+        self.gru.fit(
             self.__xNormTrain,
             self.__yNormTrain,
             validation_data=(self.__xNormTest, self.__yNormTest),
             batch_size=self.__batchSize,
-            epochs=self.__epochs,
-            callbacks=[self.__checkpoint]
+            epochs=self.__epochs
         )
-        lf().logInfo('Modelo CNN treinado!')
+        lf().logInfo('Modelo GRU treinado!')
     
     def predict(self):
         self.createModel()
         self.sumary()
         self.fit()
         
-        normPreds = self.cnn.predict(self.__xNormTest)
+        normPreds = self.gru.predict(self.__xNormTest)
         self.outPreds = Utils().denormPreds(self.__xTest, normPreds, self.__output)
         
         self.outTest = Utils().denormPreds(self.__xTest, self.__yNormTest, self.__output)

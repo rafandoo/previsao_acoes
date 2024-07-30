@@ -13,4 +13,6 @@ class View:
         plt.xlabel("tempo")
         plt.ylabel(f"{ticker} preço")
         plt.legend()
-        plt.show()
+        # plt.show()
+        plt.savefig('foo.png')
+        plt.close()

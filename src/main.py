@@ -2,21 +2,23 @@ import pandas as pd
 from data.utils import Utils
 from data.view import View
 from models.lstm import mLSTM
+from models.gru import mGRU
+from models.cnn import mCNN
 from util.logger import LoggerFactory as lf
+from util.menu import Menu
 import warnings
 
 class Main:
 
     def __init__(self) -> None:
         warnings.filterwarnings('ignore')
-        pass
     
     def run(self):
         lf(level='DEBUG')
         lf().logInfo('Iniciando a aplicação...')
         
         lf().logInfo('Carregando o dataset...')
-        df = pd.read_csv('src\\data\\b3_stocks_1994_2020.csv', low_memory=False)
+        df = pd.read_csv('/workspaces/previsao-acoes/src/data/b3_stocks_1994_2020.csv', low_memory=False)
         lf().logInfo('Dataset carregado!')
         
         dft = Utils().getDfTicker(df, 'BBDC4')
@@ -40,20 +42,34 @@ class Main:
         xNormTrain, xNormTest, yNormTrain, yNormTest = Utils().splitTrainTest([xNorm, yNorm], percent=0.85)
         
         #breakpoint()
-        lstm = mLSTM(
+        rna = mCNN(
             xTest=xTest,
             xNormTrain=xNormTrain, 
             xNormTest=xNormTest, 
             yNormTrain=yNormTrain, 
             yNormTest=yNormTest, 
             inputs=input, 
-            output=output
+            output=output,
+            batchSize=64,
+            epochs=40
         )
         
-        lstm.run()
+        rna.run()
         
-        View(lstm).showGraph("BBDC4")
+        View(rna).showGraph("BBDC4")
         
         
 if __name__ == '__main__':
-    Main().run()
+    # Main().run()
+    
+    Menu([
+        ("teste", [
+            ("aaa", 1)
+        ]),
+        ("Iniciar", Main().run)
+    ])
+        # menuPrincipal = [
+    #     ("Conversão", conversao),
+    #     ("Exportação", exportacao),
+    #     ("Sair", close),
+    # ]
